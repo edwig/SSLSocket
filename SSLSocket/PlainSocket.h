@@ -76,21 +76,21 @@ private:
   bool  ActivateKeepalive();
 
   static WSADATA  m_wsaData;
-  bool            m_initDone            { false   };
+  bool            m_initDone            { false   };  // Initialize called (or not)
   bool            m_active              { true    };  // Active = true means clientside socket, passive is serverside
-	CTime           m_recvEndTime         { 0       };
-	CTime           m_sendEndTime         { 0       };
-	WSAEVENT        m_write_event         { nullptr };
-	WSAEVENT        m_read_event          { nullptr };
-	WSAOVERLAPPED   m_os                  { 0       };
-	bool            m_recvInitiated       { false   };
-	SOCKET          m_actualSocket        { NULL    };
-  int             m_sendTimeoutSeconds  { 1       };
-  int             m_recvTimeoutSeconds  { 1       };
-	HANDLE          m_stopEvent           { nullptr };
+	CTime           m_recvEndTime         { 0       };  // Moment where the receive will time out
+	CTime           m_sendEndTime         { 0       };  // Moment where the send will time out
+	WSAEVENT        m_write_event         { nullptr };  // Event used when writing to the socket
+	WSAEVENT        m_read_event          { nullptr };  // Event used when reading from the socket
+	WSAOVERLAPPED   m_os                  { 0       };  // Overlapping I/O structure
+	bool            m_recvInitiated       { false   };  // Receive in transit, used for retrying a receive operation
+	SOCKET          m_actualSocket        { NULL    };  // The underlying WSA socket from the MS-Windows operating system
+  int             m_sendTimeoutSeconds  { 1       };  // Send timeout in seconds
+  int             m_recvTimeoutSeconds  { 1       };  // Receive timeout in seconds
+	HANDLE          m_stopEvent           { nullptr };  // Stopping a reading side of a socket
   // Keep alive
-  bool            m_useKeepalive        { false   };
-  int             m_keepaliveTime       { 5000    };
-  int             m_keepaliveInterval   { 2500    };
+  bool            m_useKeepalive        { false   };  // Use the WSA socket keepalive 
+  int             m_keepaliveTime       { 15      };  // Keepalive time     in seconds
+  int             m_keepaliveInterval   { 15      };  // Keepalive interval in seconds
 };
 

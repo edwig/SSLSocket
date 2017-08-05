@@ -53,12 +53,6 @@ PSecurityFunctionTable SecureServerSocket::SSPI(void)
   return g_pSSPI;
 }
 
-// Return an ISocketStream interface to the SSL connection to anyone that needs one
-// ISocketStream* SecureServerSocket::getSocketStream(void)
-// {
-// 	return m_SocketStream; // for now, return 'this' later, once we can do SSL
-// }
-
 // Set up the connection, including SSL handshake, certificate selection/validation
 HRESULT 
 SecureServerSocket::InitializeSSL(const void* p_buffer, const int p_length)
@@ -539,14 +533,12 @@ bool SecureServerSocket::SSPINegotiateLoop(void)
 			}
 		}
 
-		//
 		// InBuffers[1] is used for storing extra data that SSPI/SCHANNEL doesn't process on this run around the loop.
 		//
     // Set up the input buffers. Buffer 0 is used to pass in data
     // received from the server. Schannel will consume some or all
     // of this. Leftover data (if any) will be placed in buffer 1 and
     // given a buffer type of SECBUFFER_EXTRA.
-    //
 
 		InBuffers[0].pvBuffer = m_readBuffer;
 		InBuffers[0].cbBuffer = m_readBufferBytes;
@@ -560,22 +552,20 @@ bool SecureServerSocket::SSPINegotiateLoop(void)
 		InBuffer.pBuffers        = InBuffers;
 		InBuffer.ulVersion       = SECBUFFER_VERSION;
 
-		//
-        // Set up the output buffers. These are initialized to NULL
-        // so as to make it less likely we'll attempt to free random
-        // garbage later.
-		//
+    // Set up the output buffers. These are initialized to NULL
+    // so as to make it less likely we'll attempt to free random
+    // garbage later.
 
-		OutBuffers[0].pvBuffer   = NULL;
+    OutBuffers[0].pvBuffer   = NULL;
 		OutBuffers[0].BufferType = SECBUFFER_TOKEN;
 		OutBuffers[0].cbBuffer   = 0;
 
 		scRet = g_pSSPI->AcceptSecurityContext(&g_ServerCreds								        // Which certificate to use, already established
-			                                    ,ContextHandleValid?&m_context:NULL	// The context handle if we have one, ask to make one if this is first call
+			                                    ,ContextHandleValid?&m_context:NULL	  // The context handle if we have one, ask to make one if this is first call
 			                                    ,&InBuffer										        // Input buffer list
 			                                    ,dwSSPIFlags									        // What we require of the connection
 			                                    ,0													          // Data representation, not used 
-			                                    ,ContextHandleValid?NULL:&m_context	// If we don't yet have a context handle, it is returned here
+			                                    ,ContextHandleValid?NULL:&m_context	  // If we don't yet have a context handle, it is returned here
 			                                    ,&OutBuffer										        // [out] The output buffer, for messages to be sent to the other end
 			                                    ,&dwSSPIOutFlags								      // [out] The flags associated with the negotiated connection
 			                                    ,&tsExpiry);										      // [out] Receives context expiration time
@@ -589,7 +579,6 @@ bool SecureServerSocket::SSPINegotiateLoop(void)
       if(OutBuffers[0].cbBuffer != 0 && OutBuffers[0].pvBuffer != NULL)
 			{
 				// Send response to client if there is one
-		 // err = m_SocketStream->CPassiveSock::Send(OutBuffers[0].pvBuffer, OutBuffers[0].cbBuffer);
         err = PlainSocket::SendPartial(OutBuffers[0].pvBuffer,OutBuffers[0].cbBuffer);
         m_lastError = 0;
 				if (err == SOCKET_ERROR || err == 0)
@@ -744,10 +733,9 @@ SecureServerSocket::Disconnect(int p_how /*=SD_BOTH*/)
 	DWORD           Status;
 
 	//
-	// Notify schannel that we are about to close the connection.
+	// Notify SCHANNEL that we are about to close the connection.
 	//
-
-	dwType = SCHANNEL_SHUTDOWN;
+  dwType = SCHANNEL_SHUTDOWN;
 
 	OutBuffers[0].pvBuffer   = &dwType;
 	OutBuffers[0].BufferType = SECBUFFER_TOKEN;

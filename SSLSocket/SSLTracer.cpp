@@ -50,10 +50,11 @@ bool SSLTracer::CanDecode()
   else
   {
     contentType = *(DataPtr++);
-    major    = *(DataPtr++);
-    minor    = *(DataPtr++);
-    length   = (*(DataPtr) << 8) + *(DataPtr + 1);
-    DataPtr += 2;
+    major       = *(DataPtr++);
+    minor       = *(DataPtr++);
+    length      = (*(DataPtr) << 8) + *(DataPtr + 1);
+    DataPtr    += 2;
+
     if(length + 5 > MaxBufBytes)
     {
       return false;

@@ -761,23 +761,19 @@ SecureClientSocket::SSPINegotiateLoop(TCHAR* ServerName)
       break;
     }
 
-
     //
     // Check for fatal error.
     //
-
     if(FAILED(scRet))
     {
-			LogError("**** Error %#x returned by InitializeSecurityContext (2)", scRet);
+      LogError("**** Error %#x returned by InitializeSecurityContext (2)",scRet);
       break;
     }
-
 
     //
     // If InitializeSecurityContext returned SEC_I_INCOMPLETE_CREDENTIALS,
     // then the server just requested client authentication. 
     //
-
     if(scRet == SEC_I_INCOMPLETE_CREDENTIALS)
     {
       //

@@ -106,7 +106,8 @@ void SendingString(SocketStream* p_socket,CString p_string)
   {
     cout << "!! ERROR Sending string" << endl;
   }
-  cout << ++line << " : " << p_string;
+  ++line;
+  cout << "OUT : " << p_string;
 }
 
 bool ReceiveString(SocketStream* p_socket,CString& p_string)
@@ -121,7 +122,7 @@ bool ReceiveString(SocketStream* p_socket,CString& p_string)
     result   = true;
     buffer[len] = 0;
     p_string = buffer;
-    cout << "IN : " << p_string;;
+    cout << "IN  : " << p_string;;
   }
   else
   {
@@ -195,18 +196,22 @@ int main(int argc,char* argv[],char* envp[])
   SetSocketLogging(SOCK_LOGGING_FULLTRACE);
 
   // The one and only listener
-  unique_ptr<Listener> Listener(new Listener());
+  unique_ptr<Listener> listener(new Listener());
+
+  // Set reasonable timeouts
+  listener->SetSendTimeoutSeconds(30);
+  listener->SetRecvTimeoutSeconds(60);
 
   // Connect function where we can select our server certificate
-  Listener->m_selectServerCert     = SelectServerCert;
+  listener->m_selectServerCert     = SelectServerCert;
   // Filling in this function call will request a client certificate
   // Leaving it out will run an SSL/TLS connection without one
-  Listener->m_clientCertAcceptable = ClientCertAcceptable;
+  listener->m_clientCertAcceptable = ClientCertAcceptable;
 
-	Listener->Initialize(portNumber);
+	listener->Initialize(portNumber);
 
   cout << "Starting to listen on port: " << portNumber << endl;
-  Listener->BeginListening([](SocketStream* p_serverSocket)
+  listener->BeginListening([](SocketStream* p_serverSocket)
   {
     // OriginalTestProgram(p_serverSocket);
     NewTestProgram(p_serverSocket);
@@ -214,7 +219,7 @@ int main(int argc,char* argv[],char* envp[])
 
 	cout << "Listening, press any key to exit.\n" << endl;
 	getchar();
-	Listener->EndListening();
+	listener->EndListening();
 
   WSACleanup();
 	return 0;

@@ -14,7 +14,7 @@
 #include <cryptuiapi.h>
 #pragma comment(lib,"cryptui.lib")
 #ifndef SCH_USE_STRONG_CRYPTO // Needs KB 2868725 which is only in Windows 7+
-#define SCH_USE_STRONG_CRYPTO                        0x00400000
+#define SCH_USE_STRONG_CRYPTO 0x00400000
 #endif
 
 class SSLTracer

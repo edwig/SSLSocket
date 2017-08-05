@@ -193,8 +193,8 @@ bool PlainSocket::ActivateKeepalive()
     tcp_keepalive setting = { 0 };
 
     setting.onoff             = 1;
-    setting.keepalivetime     = m_keepaliveTime;     // Keep Alive in x milli seconds
-    setting.keepaliveinterval = m_keepaliveInterval; // Resend if No-Reply
+    setting.keepalivetime     = m_keepaliveTime     * CLOCKS_PER_SEC;     // Keep Alive in x milli seconds
+    setting.keepaliveinterval = m_keepaliveInterval * CLOCKS_PER_SEC;     // Resend if No-Reply
     if (WSAIoctl(m_actualSocket
                 ,SIO_KEEPALIVE_VALS
                 ,&setting

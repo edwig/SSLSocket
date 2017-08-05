@@ -32,13 +32,18 @@ public:
   void BeginListening(std::function<void(SocketStream* p_serverSocket)> actualwork);
   void EndListening(void);
 
+  void SetSendTimeoutSeconds(int p_timeout) { m_sendTimeoutSeconds = p_timeout; };
+  void SetRecvTimeoutSeconds(int p_timeout) { m_recvTimeoutSeconds = p_timeout; };
+  int  GetSendTimeoutSeconds() { return m_sendTimeoutSeconds;  };
+  int  GetRecvTimeoutSeconds() { return m_recvTimeoutSeconds;  };
+
   std::function<SECURITY_STATUS(PCCERT_CONTEXT & pCertContext,LPCTSTR pszSubjectName)> m_selectServerCert;
-  std::function<bool(PCCERT_CONTEXT pCertContext,const bool trusted)> m_clientCertAcceptable;
+  std::function<bool(PCCERT_CONTEXT pCertContext,const bool trusted)>                  m_clientCertAcceptable;
 
   int     m_workerThreadCount;
   CEvent  m_stopEvent;
 private:
-  static UINT __cdecl Worker(LPVOID);
+  static UINT __cdecl Worker(void *);
   static UINT __cdecl ListenerWorker(LPVOID);
   void                Listen(void);
 
@@ -48,5 +53,8 @@ private:
   int               m_numListenSockets;
   CCriticalSection  m_workerThreadLock;
   CWinThread*       m_listenerThread;
+
+  int               m_sendTimeoutSeconds { 30 };  // Send timeout in seconds
+  int               m_recvTimeoutSeconds { 30 };  // Receive timeout in seconds
 };
 

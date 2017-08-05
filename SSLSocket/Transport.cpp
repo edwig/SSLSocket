@@ -28,8 +28,8 @@ Transport::Transport(SOCKET p_socket,Listener* p_listener) // constructor requir
 	         ,m_serverSocket(nullptr)
 {
 	m_serverSocket = new SecureServerSocket(p_socket,m_stopEvent);
-  m_serverSocket->SetSendTimeoutSeconds(60);
-  m_serverSocket->SetRecvTimeoutSeconds(60);
+  m_serverSocket->SetSendTimeoutSeconds(p_listener->GetSendTimeoutSeconds());
+  m_serverSocket->SetRecvTimeoutSeconds(p_listener->GetRecvTimeoutSeconds());
   m_serverSocket->Initialize();
 }
 

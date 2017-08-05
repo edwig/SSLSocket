@@ -196,12 +196,13 @@ void SendingString(SocketStream* p_socket,CString p_string)
   {
     cout << "!! ERROR Sending string" << endl;
   }
-  cout << ++line << " : " << p_string;
+  ++line;
+  cout << "OUT : " << p_string;
 }
 
 bool ReceiveString(SocketStream* p_socket,CString& p_string)
 {
-  char buffer[1024];
+  char buffer[1024 + 1];
   bool result = false;
 
   p_string.Empty();
@@ -211,7 +212,7 @@ bool ReceiveString(SocketStream* p_socket,CString& p_string)
     result = true;
     buffer[len] = 0;
     p_string = buffer;
-    cout << "IN : " << p_string;;
+    cout << "IN  : " << p_string;;
   }
   else
   {
@@ -236,6 +237,19 @@ CString ExtractWord(CString& p_line)
   return word;
 }
 
+void StartSSL(SecureClientSocket* p_socket)
+{
+  HRESULT hr = p_socket->InitializeSSL();
+  if(SUCCEEDED(hr))
+  {
+    cout << "Client switched to secure TLS mode" << endl;
+  }
+  else
+  {
+    cout << "SSL client initialize failed" << endl;
+  }
+}
+
 void
 NewTestProgram(SecureClientSocket* p_socket)
 {
@@ -248,52 +262,62 @@ NewTestProgram(SecureClientSocket* p_socket)
     // Show what the server did send us
     cout << data;
 
+    CString code = ExtractWord(data);
+
+    // Last command was STARTTLS and servers said "OK"
+    if(command == 2 && atoi(code) == 220)
+    {
+      StartSSL(p_socket);
+    }
+
     switch(++command)
     {
-      case  1: SendingString(p_socket,"EHLO\r\n");     break;
+      case  1: SendingString(p_socket,"EHLO mail\r\n");     break;
       case  2: SendingString(p_socket,"STARTTLS\r\n"); break;
       case  3: SendingString(p_socket,"TO\r\n");       break;
       case  4: SendingString(p_socket,"SUBJECT\r\n");  break;
       case  5: SendingString(p_socket,"QUIT\r\n");     break;
       default: return;
     }
-
-    if(command == 2)
-    {
-      HRESULT hr = p_socket->InitializeSSL();
-      if(SUCCEEDED(hr))
-      {
-        cout << "Client switched to secure TLS mode" << endl;
-      }
-      else
-      {
-        cout << "SSL client initialize failed" << endl;
-      }
-    }
   }
 }
 
-// SSLClient [hostname]
-// Works on port 41000
+// StreamClient [hostname [portnumber]]
+// Works default on port 41000 on the same system
+//
+// SMTP Ports:
+// 25    -> Insecure SMTP email
+// 465   -> SSL/TLS connected SMTP
+// 587   -> Authenticated email
 //
 int main(int argc,char* argv[])
 {
-  CString HostName(GetHostName(ComputerNameDnsFullyQualified));
+  // Defaults
+  CString hostName(GetHostName(ComputerNameDnsFullyQualified));
+  int     port = 41000;
+
+  // Get overrides from the command line
   if(argc >= 2)
   {
-    HostName.SetString(argv[1]);
+    hostName.SetString(argv[1]);
+    if(argc >= 3)
+    {
+      port = atoi(argv[2]);
+    }
   }
-	int Port = 41000;
 
+  // Use full tracing on the default debug pane
   SetSocketLogging(SOCK_LOGGING_FULLTRACE);
 
+  // Create a new client socket
 	EventWrapper ShutDownEvent;
-
   SecureClientSocket* socket = new SecureClientSocket(ShutDownEvent);
-	socket->SetRecvTimeoutSeconds(30);
+
+  // Settings for a client socket
+  socket->SetRecvTimeoutSeconds(30);
 	socket->SetSendTimeoutSeconds(60);
-  socket->SetKeepaliveTime(5000);
-  socket->SetKeepaliveInterval(7000);
+  socket->SetKeepaliveTime(10);
+  socket->SetKeepaliveInterval(10);
   socket->SetUseKeepAlive(true);
   socket->SetSSLProtectionLevel(TLS_12);
   socket->m_serverCertAcceptable    = CertAcceptable;
@@ -301,8 +325,8 @@ int main(int argc,char* argv[])
 
   socket->Initialize();
 
-	wcout << "Connecting to " << HostName.GetString() << ":" << Port << endl;
-	bool connected = socket->Connect(HostName, Port);
+	wcout << "Connecting to " << hostName.GetString() << ":" << port << endl;
+	bool connected = socket->Connect(hostName, port);
 	if (connected)
 	{
     //OriginalTestProgram(socket);
