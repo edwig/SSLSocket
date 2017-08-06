@@ -270,14 +270,20 @@ NewTestProgram(SecureClientSocket* p_socket)
       StartSSL(p_socket);
     }
 
+    if(atoi(code) == 221)
+    {
+      cout << "Server detached channel" << endl;
+      return;
+    }
+
     switch(++command)
     {
-      case  1: SendingString(p_socket,"EHLO mail\r\n");     break;
+      case  1: SendingString(p_socket,"EHLO mail\r\n");break;
       case  2: SendingString(p_socket,"STARTTLS\r\n"); break;
       case  3: SendingString(p_socket,"TO\r\n");       break;
       case  4: SendingString(p_socket,"SUBJECT\r\n");  break;
       case  5: SendingString(p_socket,"QUIT\r\n");     break;
-      default: return;
+      default: break;
     }
   }
 }
@@ -287,8 +293,8 @@ NewTestProgram(SecureClientSocket* p_socket)
 //
 // SMTP Ports:
 // 25    -> Insecure SMTP email
-// 465   -> SSL/TLS connected SMTP
-// 587   -> Authenticated email
+// 465   -> No longer in use!!
+// 587   -> SSL/TLS connected SMTP + Authenticated email
 //
 int main(int argc,char* argv[])
 {
@@ -314,6 +320,7 @@ int main(int argc,char* argv[])
   SecureClientSocket* socket = new SecureClientSocket(ShutDownEvent);
 
   // Settings for a client socket
+  socket->SetConnTimeoutSeconds(15);
   socket->SetRecvTimeoutSeconds(30);
 	socket->SetSendTimeoutSeconds(60);
   socket->SetKeepaliveTime(10);

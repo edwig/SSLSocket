@@ -169,12 +169,16 @@ NewTestProgram(SocketStream* p_socket)
     // See if we must switch
     if(word.CompareNoCase("starttls") == 0)
     {
+      // Send the OK, Go ahead confirmation
+      SendingString(p_socket,g_okstring);
+
       // Start SSL for the server
       if(FAILED(p_socket->InitializeSSL()))
       {
         cout << "Failed to engage SSL/TLS mode..." << endl;
         return;
       }
+      continue;
     }
 
     // Accept the command for now

@@ -52,7 +52,11 @@ public:
   // Last error state
 	DWORD GetLastError() override;
 
+  // Check if the socket is (still) readable
+  bool  IsReadible(bool& p_readible);
+
   // SETTERS
+  void  SetConnTimeoutSeconds(int  p_newTimeoutSeconds);
   void  SetRecvTimeoutSeconds(int  p_newTimeoutSeconds);
   void  SetSendTimeoutSeconds(int  p_newTimeoutSeconds);
   bool  SetUseKeepAlive      (bool p_keepalive);
@@ -60,6 +64,7 @@ public:
   bool  SetKeepaliveInterval (int  p_interval);
 
   // GETTERS
+  int   GetConnTimeoutSeconds()   { return m_connTimeoutSeconds;  };
   int   GetRecvTimeoutSeconds()   { return m_recvTimeoutSeconds;  };
   int   GetSendTimeoutSeconds()   { return m_sendTimeoutSeconds;  };
   bool  GetUseKeepalive()         { return m_useKeepalive;        };
@@ -74,6 +79,8 @@ protected:
 private:
   // Activate keep-alive and keep-alive times
   bool  ActivateKeepalive();
+  // Find connection type (AF_INET (IPv4) or AF_INET6 (IPv6))
+  int   FindConnectType(LPCTSTR p_host,char* p_portname);
 
   static WSADATA  m_wsaData;
   bool            m_initDone            { false   };  // Initialize called (or not)
@@ -85,6 +92,7 @@ private:
 	WSAOVERLAPPED   m_os                  { 0       };  // Overlapping I/O structure
 	bool            m_recvInitiated       { false   };  // Receive in transit, used for retrying a receive operation
 	SOCKET          m_actualSocket        { NULL    };  // The underlying WSA socket from the MS-Windows operating system
+  int             m_connTimeoutSeconds  { 1       };  // Connection timeout in seconds
   int             m_sendTimeoutSeconds  { 1       };  // Send timeout in seconds
   int             m_recvTimeoutSeconds  { 1       };  // Receive timeout in seconds
 	HANDLE          m_stopEvent           { nullptr };  // Stopping a reading side of a socket

@@ -91,63 +91,101 @@ PlainSocket::Initialize()
   m_initDone = true;
 }
 
+// Find connection type (AF_INET (IPv4) or AF_INET6 (IPv6))
+int
+PlainSocket::FindConnectType(LPCTSTR p_host,char* p_portname)
+{
+  ADDRINFO  hints;
+  ADDRINFO* result;
+  memset(&hints,0,sizeof(ADDRINFO));
+  int type = AF_INET;
+
+  // Request streaming type socket in TCP/IP protocol
+  hints.ai_family   = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+
+  DWORD retval = getaddrinfo(p_host,p_portname,&hints,&result);
+  if(retval == 0)
+  {
+    if((result->ai_family == AF_INET6) ||
+       (result->ai_family == AF_INET))
+    {
+      type = result->ai_family;
+    }
+    freeaddrinfo(result);
+  }
+  else
+  {
+    // MESS_INETTYPE 
+    LogError("Cannot determine if internet is of type IP4 or IP6");
+  }
+  // Assume it's IP4 as a default
+  return type;
+}
+
 // Connect as a client to a server actively
 bool 
 PlainSocket::Connect(LPCTSTR p_hostName, USHORT p_portNumber)
 {
-	SOCKADDR_STORAGE LocalAddr  = {0};
-	SOCKADDR_STORAGE RemoteAddr = {0};
-	DWORD dwLocalAddr  = sizeof(LocalAddr);
-	DWORD dwRemoteAddr = sizeof(RemoteAddr);
-	TCHAR PortName[10] = {0};
-	timeval Timeout    = {0};
-  BOOL    bSuccess   = FALSE;
-  int     iResult    = 0;
+	SOCKADDR_STORAGE localAddr  = {0};
+	SOCKADDR_STORAGE remoteAddr = {0};
+	DWORD sizeLocalAddr  = sizeof(localAddr);
+	DWORD sizeRemoteAddr = sizeof(remoteAddr);
+	char  portName[10]   = {0};
+  BOOL    bSuccess     = FALSE;
+	timeval timeout      = {0};
+  int     result       = 0;
 
   if(m_initDone == false)
   {
     Initialize();
   }
 
-	Timeout.tv_sec =  GetSendTimeoutSeconds();
+  // Convert port number and find IPv4 or IPv6
+  _itoa_s(p_portNumber, portName, _countof(portName), 10);
+  int type = FindConnectType(p_hostName,portName);
 
-  _itot_s(p_portNumber, PortName, _countof(PortName), 10);
-
-	m_actualSocket = socket(AF_INET, SOCK_STREAM, 0);
+  // Create the actual physical socket
+	m_actualSocket = socket(type, SOCK_STREAM, 0);
 	if (m_actualSocket == INVALID_SOCKET)
   {
 		LogError("Socket failed with error: %d\n", WSAGetLastError());
 		return false;
 	}
+
+  // Find timeout for the connection
+  timeout.tv_sec = GetConnTimeoutSeconds();
 	CTime Now = CTime::GetCurrentTime();
 
 	// Note that WSAConnectByName requires Vista or Server 2008
 	bSuccess = WSAConnectByName(m_actualSocket
                              ,const_cast<LPTSTR>(p_hostName)
-                             ,PortName
-                             ,&dwLocalAddr
-                             ,(SOCKADDR*)&LocalAddr
-                             ,&dwRemoteAddr
-                             ,(SOCKADDR*)&RemoteAddr
-                             ,&Timeout
+                             ,portName
+                             ,&sizeLocalAddr
+                             ,(SOCKADDR*)&localAddr
+                             ,&sizeRemoteAddr
+                             ,(SOCKADDR*)&remoteAddr
+                             ,&timeout
                              ,nullptr);
 
 	CTimeSpan HowLong = CTime::GetCurrentTime() - Now;
-
 	if (!bSuccess)
   {
 		m_lastError = WSAGetLastError();
 		LogError("**** WSAConnectByName Error %d connecting to \"%s\" (%s)", 
 				     m_lastError,
 				     p_hostName, 
-				     PortName);
+				     portName);
 		closesocket(m_actualSocket);
 		return false;       
 	}
 
+  DebugMsg("Connection made in %ld second(s)",HowLong.GetTotalSeconds());
+
   // Activate previously set options
-	iResult = setsockopt(m_actualSocket, SOL_SOCKET,SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-	if (iResult == SOCKET_ERROR)
+	result = setsockopt(m_actualSocket, SOL_SOCKET,SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+	if (result == SOCKET_ERROR)
   {
 		m_lastError = WSAGetLastError();
 		LogError("setsockopt for SO_UPDATE_CONNECT_CONTEXT failed with error: %d", m_lastError);
@@ -155,7 +193,7 @@ PlainSocket::Connect(LPCTSTR p_hostName, USHORT p_portNumber)
 		return false;       
 	}
 
-  bool result = true;
+  result = true;
 	// At this point we have a connection, so set up keep-alive so we can detect if the host disconnects
 	// This code is commented out because it does not seen to be helpful
   if(m_useKeepalive)
@@ -345,6 +383,18 @@ int PlainSocket::RecvMsg(LPVOID p_buffer, const ULONG p_length)
     }
 	}; // loop
 	return (total_bytes_received);
+}
+
+void PlainSocket::SetConnTimeoutSeconds(int p_newTimeoutSeconds)
+{
+  if(p_newTimeoutSeconds == INFINITE)
+  {
+    p_newTimeoutSeconds = MAXINT;
+  }
+  if(p_newTimeoutSeconds > 0)
+  {
+    m_connTimeoutSeconds = p_newTimeoutSeconds;
+  }
 }
 
 void PlainSocket::SetRecvTimeoutSeconds(int NewRecvTimeoutSeconds)
@@ -550,4 +600,24 @@ PlainSocket::SendMsg(LPCVOID p_buffer, const ULONG p_length)
     }
 	}; // loop
 	return (total_bytes_sent);
+}
+
+// Test if the socket is (still) readable
+bool
+PlainSocket::IsReadible(bool& p_readible)
+{
+  timeval timeout = {0, 0};
+  fd_set  fds;
+  FD_ZERO(&fds);
+  FD_SET(m_actualSocket,&fds);
+  int status = select(0,&fds,nullptr,nullptr,&timeout);
+  if(status == SOCKET_ERROR)
+  {
+    return false;
+  }
+  else
+  {
+    p_readible = !(status == 0);
+    return true;
+  }
 }
