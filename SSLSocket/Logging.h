@@ -18,7 +18,7 @@
 extern int SSL_socket_logging;  // Holds the current logging level
 
 // Definition of a 'real' printing function
-typedef void(*OutputString)(LPCSTR lpOutputString);
+typedef void(__stdcall *OutputString)(LPCSTR lpOutputString);
 // Holds the 'real' printing function, defaulting to "OutputDebugString"
 extern OutputString printing;
 

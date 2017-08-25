@@ -1078,7 +1078,14 @@ SecureClientSocket::SendMsg(LPCVOID p_buffer,const ULONG p_length)
 
   while(total_bytes_sent < p_length)
   {
-    bytes_sent = SecureClientSocket::SendPartial((char*)p_buffer + total_bytes_sent,p_length - total_bytes_sent);
+    // Calculate max block to send. Must NOT be larger than MaxMsgSize (4 * 4K BLOCKSIZE)
+    ULONG toSend = p_length - total_bytes_sent;
+    if(toSend > MaxMsgSize)
+    {
+      toSend = MaxMsgSize;
+    }
+
+    bytes_sent = SecureClientSocket::SendPartial((char*)p_buffer + total_bytes_sent,toSend);
     if((bytes_sent == SOCKET_ERROR))
     {
       return SOCKET_ERROR;

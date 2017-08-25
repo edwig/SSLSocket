@@ -170,7 +170,7 @@ bool MatchCertHostName(PCCERT_CONTEXT pCertContext, LPCSTR hostname)
   CString HostName(hostname);
 
   // Extract the SAN information (list of names) 
-  DWORD cbStructInfo = -1;
+  DWORD cbStructInfo = 0xFFFF;
   if (pExtension && CryptDecodeObject(X509_ASN_ENCODING
                                     ,szOID
                                     ,pExtension->Value.pbData

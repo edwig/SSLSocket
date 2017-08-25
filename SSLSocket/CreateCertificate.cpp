@@ -42,8 +42,7 @@ TesCryptKeyContainter(WCHAR* p_keyContainerName,DWORD p_keyFlags)
 			DebugMsg(("CryptAcquireContext create new container... "));
 			if (!CryptAcquireContextW(&hCryptProv, p_keyContainerName, nullptr, PROV_RSA_FULL, p_keyFlags | CRYPT_NEWKEYSET))
 			{
-				int err = GetLastError();
-
+				err = GetLastError();
         if(err == NTE_EXISTS)
         {
           LogError("**** CryptAcquireContext failed with 'already exists', are you running as administrator");

@@ -256,7 +256,7 @@ bool PlainSocket::ActivateKeepalive()
 // Set up SSL/TLS state for this connection:
 // NEVER USED ON PLAIN SOCKETS! Only on derived classes!!
 HRESULT 
-PlainSocket::InitializeSSL(const void* p_buffer /*= nullptr*/,const int p_length /*= 0*/)
+PlainSocket::InitializeSSL(const void* /*p_buffer*/ /*= nullptr*/,const int /*p_length*/ /*= 0*/)
 {
   return SOCKET_ERROR;
 }
