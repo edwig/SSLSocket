@@ -3,8 +3,9 @@
 // SSL Helper functions
 //
 // Original idea:
-// David Maw: https://www.codeproject.com/Articles/1000189/A-Working-TCP-Client-and-Server-With-SSL
-// License:   https://www.codeproject.com/info/cpol10.aspx
+// David Maw:      https://www.codeproject.com/Articles/1000189/A-Working-TCP-Client-and-Server-With-SSL
+// Brandon Wilson: https://blogs.technet.microsoft.com/askpfeplat/2017/11/13/demystifying-schannel/
+// License:        https://www.codeproject.com/info/cpol10.aspx
 //
 #pragma once
 #define SECURITY_WIN32
