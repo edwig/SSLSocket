@@ -9,6 +9,7 @@
 #include "stdafx.h"
 #include "PlainSocket.h"
 #include "SecureClientSocket.h"
+#include "CreateCertificate.h"
 #include "EventWrapper.h"
 #include <atlconv.h>
 #include <string>
@@ -23,9 +24,6 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 using namespace std;
-
-// defined in another source file (CreateCertificate.cpp)
-PCCERT_CONTEXT CreateCertificate(bool MachineCert = false, LPCSTR Subject = NULL, LPCSTR FriendlyName = NULL, LPCSTR Description = NULL);
 
 // Given a pointer to a certificate context, return the certificate name 
 // (the friendly name if there is one, the subject name otherwise).

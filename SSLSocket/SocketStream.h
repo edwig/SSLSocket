@@ -4,6 +4,12 @@
 // - Abstracted for client/server side
 // - Abstracted for plain/secure sockets
 //
+// This is the hierarchy of objects derived from SocketStream:
+// 1 SocketStream
+//   2 PlainSocket
+//     3 SecureClientSocket
+//     3 SecureServerSocket
+//
 //////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <winsock2.h>
@@ -31,7 +37,7 @@ public:
 	virtual bool    Close() = 0; 
 
   // Are we running in secure SSL/TLS mode?
-  bool InSecureMode() { return m_secureMode; };
+  bool            InSecureMode() { return m_secureMode; };
 
 protected:
   // Are we initialized in secure mode or not?

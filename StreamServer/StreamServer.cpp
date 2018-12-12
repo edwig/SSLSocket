@@ -217,7 +217,6 @@ int main(int argc,char* argv[],char* envp[])
   cout << "Starting to listen on port: " << portNumber << endl;
   listener->BeginListening([](SocketStream* p_serverSocket)
   {
-    // OriginalTestProgram(p_serverSocket);
     NewTestProgram(p_serverSocket);
 	});
 

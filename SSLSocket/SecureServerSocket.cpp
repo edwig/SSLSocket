@@ -28,8 +28,7 @@ CredHandle SecureServerSocket::g_ServerCreds = { 0 };
 CString    SecureServerSocket::g_ServerName  = CString();
 
 // The SecureServerSocket class, this declares an SSL server side implementation that requires
-// some means to send messages to a client (a CPassiveSock).
-//SecureServerSocket::SecureServerSocket(CPassiveSock * p_socketStream)
+// some means to send messages to a client (a PlainSocket).
 SecureServerSocket::SecureServerSocket(SOCKET p_socket,HANDLE p_stopEvent)
                    :PlainSocket(p_socket,p_stopEvent)
                    ,m_readPointer(m_readBuffer)
@@ -215,15 +214,15 @@ int SecureServerSocket::RecvPartial(LPVOID p_buffer,const ULONG p_length)
 		{
       if(WSA_IO_PENDING == GetLastError())
       {
-        LogError("Recv timed out");
+        LogError("Receive timed out");
       }
       else if(WSAECONNRESET == GetLastError())
       {
-        LogError("Recv failed, the socket was closed by the other side");
+        LogError("Receive failed, the socket was closed by the other side");
       }
       else
       {
-        LogError("Recv failed: %ld",GetLastError());
+        LogError("Receive failed: %ld",GetLastError());
       }
 			return SOCKET_ERROR;
 		}
@@ -232,8 +231,8 @@ int SecureServerSocket::RecvPartial(LPVOID p_buffer,const ULONG p_length)
 		PrintHexDump(err, (CHAR*)m_readPointer + m_readBufferBytes);
 		m_readBufferBytes += err;
 
-		Buffers[0].pvBuffer = m_readPointer;
-		Buffers[0].cbBuffer = m_readBufferBytes;
+		Buffers[0].pvBuffer   = m_readPointer;
+		Buffers[0].cbBuffer   = m_readBufferBytes;
 		Buffers[0].BufferType = SECBUFFER_DATA;
 
 		Buffers[1].BufferType = SECBUFFER_EMPTY;
@@ -291,7 +290,7 @@ int SecureServerSocket::RecvPartial(LPVOID p_buffer,const ULONG p_length)
 	}
 
 	// See if there was any extra data read beyond what was needed for the message we are handling
-	// TCP can sometime merge multiple messages into a single one, if there is, it will amost 
+	// TCP can sometimes merge multiple messages into a single one, if there is, it will almost 
 	// certainly be in the fourth buffer (index 3), but search all but the first, just in case.
 	PSecBuffer pExtraDataBuffer(NULL);
 
@@ -308,16 +307,16 @@ int SecureServerSocket::RecvPartial(LPVOID p_buffer,const ULONG p_length)
 	{	
     // More data was read than is needed, this happens sometimes with TCP
 		DebugMsg(" ");
-		DebugMsg("Some extra ciphertext was read (%d bytes)", pExtraDataBuffer->cbBuffer);
+		DebugMsg("Some extra cipher text was read (%d bytes)", pExtraDataBuffer->cbBuffer);
 		// Remember where the data is for next time
 		m_readBufferBytes = pExtraDataBuffer->cbBuffer;
-		m_readPointer = pExtraDataBuffer->pvBuffer;
+		m_readPointer     = pExtraDataBuffer->pvBuffer;
 	}
 	else
 	{
-		DebugMsg("No extra ciphertext was read");
+		DebugMsg("No extra cipher text was read");
 		m_readBufferBytes = 0;
-		m_readPointer = m_readBuffer;
+		m_readPointer     = m_readBuffer;
 	}
 	
 	return pDataBuffer->cbBuffer;
@@ -696,7 +695,7 @@ bool SecureServerSocket::SSPINegotiateLoop(void)
 	} // while loop
 
 	// Something is wrong, we exited the loop abnormally
-	LogError("Unexpected security return value %lx", scRet);
+	LogError("Unexpected security return value: %lx", scRet);
 	m_lastError = scRet;
 	return false;
 }

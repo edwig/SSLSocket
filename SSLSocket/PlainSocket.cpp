@@ -323,7 +323,7 @@ int PlainSocket::RecvPartial(LPVOID p_buffer, const ULONG p_length)
   {
     IOCompleted = true;
   }
-	if (IOCompleted)
+	if(IOCompleted)
 	{
 		m_recvInitiated = false;
 		if (WSAGetOverlappedResult(m_actualSocket, &m_os, &bytes_read, true, &msg_flags) && (bytes_read > 0))
@@ -343,7 +343,8 @@ int PlainSocket::RecvPartial(LPVOID p_buffer, const ULONG p_length)
 			return bytes_read; // Normal case, we read some bytes, it's all good
 		}
 		else
-		{	// A bad thing happened
+		{	
+      // A bad thing happened
 			int error = WSAGetLastError();
       if(error == 0) // The socket was closed
       {
