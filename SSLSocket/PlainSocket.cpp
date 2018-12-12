@@ -265,7 +265,7 @@ PlainSocket::InitializeSSL(const void* /*p_buffer*/ /*= nullptr*/,const int /*p_
 int PlainSocket::RecvPartial(LPVOID p_buffer, const ULONG p_length)
 {
 	WSABUF    buffer;
-	WSAEVENT  hEvents[2] = {m_read_event, m_stopEvent};
+	WSAEVENT  hEvents[2] = {m_stopEvent,m_read_event};
   DWORD			bytes_read = 0;
   DWORD     msg_flags  = 0;
 	int       received   = 0;
@@ -480,17 +480,21 @@ PlainSocket::Disconnect(int p_how)
 bool PlainSocket::Close(void)
 {
   // Shutdown both sides of the socket
-  if(Disconnect(SD_BOTH) == 0)
+  if(Disconnect(SD_SEND) == SOCKET_ERROR)
   {
-    m_actualSocket = NULL;
-    m_initDone     = false;
-    return true;
+    m_lastError = ::WSAGetLastError();
+    return false;
   }
-	else
-	{
-		m_lastError = ::WSAGetLastError();
-		return false;
-	}
+
+  // Close complete socket
+  if(::closesocket(m_actualSocket) == SOCKET_ERROR)
+  {
+    m_lastError = ::WSAGetLastError();
+  }
+  m_actualSocket = NULL;
+  m_initDone     = false;
+
+  return true;
 }
 
 // sends a message, or part of one
@@ -531,7 +535,7 @@ int PlainSocket::SendPartial(LPCVOID p_buffer, const ULONG p_length)
 
 	if ((received == SOCKET_ERROR) && (m_lastError == WSA_IO_PENDING))  // Write in progress
 	{
-		WSAEVENT hEvents[2] = {m_write_event, m_stopEvent};
+		WSAEVENT hEvents[2] = {m_stopEvent,m_write_event};
 	  DWORD dwWait;
 		CTimeSpan TimeLeft = m_sendEndTime - CTime::GetCurrentTime();
 		dwWait = WaitForMultipleObjects(2, hEvents, false, (DWORD)TimeLeft.GetTotalSeconds()*1000);

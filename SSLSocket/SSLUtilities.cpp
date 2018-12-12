@@ -3,9 +3,8 @@
 // SSL Helper functions
 //
 // Original idea:
-// David Maw:      https://www.codeproject.com/Articles/1000189/A-Working-TCP-Client-and-Server-With-SSL
-// Brandon Wilson: https://blogs.technet.microsoft.com/askpfeplat/2017/11/13/demystifying-schannel/
-// License:        https://www.codeproject.com/info/cpol10.aspx
+// David Maw: https://www.codeproject.com/Articles/1000189/A-Working-TCP-Client-and-Server-With-SSL
+// License:   https://www.codeproject.com/info/cpol10.aspx
 //
 #include "stdafx.h"
 #include "SSLUtilities.h"
@@ -27,7 +26,6 @@ static char THIS_FILE[] = __FILE__;
 CString GetHostName(COMPUTER_NAME_FORMAT WhichName)
 {
   DWORD NameLength = 0;
-  //BOOL R = GetComputerNameExW(ComputerNameDnsHostname, NULL, &NameLength);
   if (ERROR_SUCCESS == ::GetComputerNameEx(WhichName, NULL, &NameLength))
   {
     CString ComputerName;
@@ -44,7 +42,6 @@ CString GetHostName(COMPUTER_NAME_FORMAT WhichName)
 CString GetUserName(void)
 {
   DWORD NameLength = 0;
-  //BOOL R = GetComputerNameExW(ComputerNameDnsHostname, NULL, &NameLength);
   if (ERROR_SUCCESS == ::GetUserName(NULL, &NameLength))
   {
     CString UserName;
@@ -79,7 +76,7 @@ bool IsUserAdmin()
 }
 
 //
-// Usage: SetThreadName ("MainThread"[, threadID]);
+// Usage: SetThreadName ("MainThread"[, threadID])
 //
 const DWORD MS_VC_EXCEPTION = 0x406D1388;
 
@@ -102,10 +99,10 @@ void SetThreadName(char* threadName)
 void SetThreadName(char* threadName,DWORD dwThreadID)
 {
   THREADNAME_INFO info;
-  info.dwType = 0x1000;
-  info.szName = threadName;
+  info.dwType     = 0x1000;
+  info.szName     = threadName;
   info.dwThreadID = dwThreadID;
-  info.dwFlags = 0;
+  info.dwFlags    = 0;
 
   __try
   {
@@ -113,6 +110,8 @@ void SetThreadName(char* threadName,DWORD dwThreadID)
   }
   __except(EXCEPTION_EXECUTE_HANDLER)
   {
+    // Nothing done here: just name changed
+    memset(&info,0,sizeof(THREADNAME_INFO));
   }
 }
 
@@ -239,11 +238,11 @@ SECURITY_STATUS CertFindClient(PCCERT_CONTEXT & pCertContext, const LPCTSTR pszS
     return HRESULT_FROM_WIN32(err);
   }
 
-  if(pCertContext)	// The caller passed in a certificate context we no longer need, so free it
-  {
-    CertFreeCertificateContext(pCertContext);
-    pCertContext = NULL;
-  }
+//   if(pCertContext)	// The caller passed in a certificate context we no longer need, so free it
+//   {
+//     CertFreeCertificateContext(pCertContext)
+//     pCertContext = NULL
+//   }
 
   char * serverauth = szOID_PKIX_KP_CLIENT_AUTH;
   CERT_ENHKEY_USAGE eku;
@@ -262,7 +261,7 @@ SECURITY_STATUS CertFindClient(PCCERT_CONTEXT & pCertContext, const LPCTSTR pszS
                                                                   ,&eku
                                                                   ,pCertContextCurrent)))
   {
-    //ShowCertInfo(pCertContext);
+    // DEBUGGING: ShowCertInfo(pCertContext)
     if (!CertGetNameString(pCertContextCurrent, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL, pszFriendlyNameString, sizeof(pszFriendlyNameString)))
     {
         DebugMsg("CertGetNameString failed getting friendly name.");
@@ -481,7 +480,7 @@ HRESULT CertTrusted(PCCERT_CONTEXT pCertContext)
 	ZeroMemory(&polHttps, sizeof(HTTPSPolicyCallbackData));
 	polHttps.cbStruct   = sizeof(HTTPSPolicyCallbackData);
 	polHttps.dwAuthType = AUTHTYPE_SERVER;
-	polHttps.fdwChecks  = 0;    // dwCertFlags;
+	polHttps.fdwChecks  = 0;        // dwCertFlags
 	polHttps.pwszServerName = NULL; // ServerName - checked elsewhere
 
 	ZeroMemory(&PolicyPara, sizeof(PolicyPara));
@@ -504,7 +503,7 @@ HRESULT CertTrusted(PCCERT_CONTEXT pCertContext)
 	if (PolicyStatus.dwError)
 	{
 		Status = S_FALSE;
-		//DisplayWinVerifyTrustError(PolicyStatus.dwError); 
+		// DEBUGGING: DisplayWinVerifyTrustError(PolicyStatus.dwError);
 		goto cleanup;
 	}
 
@@ -602,6 +601,7 @@ HRESULT ShowCertInfo(PCCERT_CONTEXT pCertContext, CString Title)
       case CERT_KEY_IDENTIFIER_PROP_ID: 			      DebugMsg("KEY IDENTIFIER PROP identifier ");			    break;
       case CERT_AUTO_ENROLL_PROP_ID:    			      DebugMsg("AUTO ENROLL identifier. ");			            break;
       case CERT_ISSUER_PUBLIC_KEY_MD5_HASH_PROP_ID:	DebugMsg("ISSUER PUBLIC KEY MD5 HASH identifier. ");  break;
+      default:                                      DebugMsg("Unknown property");                         break;
     } // End switch.
 
 		//-------------------------------------------------------------------
@@ -627,11 +627,8 @@ HRESULT ShowCertInfo(PCCERT_CONTEXT pCertContext, CString Title)
 		// The call succeeded. Use the size to allocate memory 
 		// for the property.
 
-		if (NULL != (pvData = (void*)malloc(cbData)))
-		{
-			// Memory is allocated. Continue.
-		}
-		else
+    pvData = malloc(cbData);
+    if(pvData == nullptr)
 		{
 			// If memory allocation failed, exit to an error routine.
 			LogError("Memory allocation failed.");
@@ -652,6 +649,7 @@ HRESULT ShowCertInfo(PCCERT_CONTEXT pCertContext, CString Title)
 			// If an error occurred in the second call, 
    		// exit to an error routine.
 			LogError("Call #2 failed.");
+      free(pvData);
 			return E_FAIL;
 		}
 		//---------------------------------------------------------------
@@ -738,7 +736,7 @@ SECURITY_STATUS CertFindServerByName(PCCERT_CONTEXT & pCertContext, LPCTSTR pszS
                                                            ,&eku
                                                            ,pCertContext)))
   {
-    //ShowCertInfo(pCertContext);
+    // DEBUGGING: ShowCertInfo(pCertContext)
     if (!CertGetNameString(pCertContext, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL, pszFriendlyNameString, sizeof(pszFriendlyNameString)))
     {
       LogError("CertGetNameString failed getting friendly name.");
@@ -749,7 +747,7 @@ SECURITY_STATUS CertFindServerByName(PCCERT_CONTEXT & pCertContext, LPCTSTR pszS
     {
       LogError("CertGetNameString failed getting subject name.");
     }
-    else if(!MatchCertHostName(pCertContext,pszSubjectName))  //  (_tcscmp(pszNameString, pszSubjectName))
+    else if(!MatchCertHostName(pCertContext,pszSubjectName))
     {
       LogError("Certificate has wrong subject name.");
     }

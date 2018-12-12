@@ -33,16 +33,19 @@ void SetSocketLogging(int p_logging)
 
 void LogError(const char* p_format,...)
 {
-  char buf[bufferLength];
-  StringCchPrintf(buf,sizeof(buf) / sizeof(char),"(%lu) : ERROR : ",GetCurrentThreadId());
+  if(SSL_socket_logging)
+  {
+    char buf[bufferLength];
+    StringCchPrintf(buf,sizeof(buf) / sizeof(char),"(%lu) : ERROR : ",GetCurrentThreadId());
 
-  va_list arglist;
-  va_start(arglist,p_format);
-  StringCchVPrintf(&buf[strlen(buf)],sizeof(buf) / sizeof(char),p_format,arglist);
-  va_end(arglist);
+    va_list arglist;
+    va_start(arglist,p_format);
+    StringCchVPrintf(&buf[strlen(buf)],sizeof(buf) / sizeof(char),p_format,arglist);
+    va_end(arglist);
 
-  StringCchCat(buf,sizeof(buf) / sizeof(char),"\n");
-  (*printing)(buf);
+    StringCchCat(buf,sizeof(buf) / sizeof(char),"\n");
+    (*printing)(buf);
+  }
 }
 
 

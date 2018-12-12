@@ -68,7 +68,7 @@ private:
 
   // CONSTANTS
   static const int  MaxMsgSize   = 16000; // Arbitrary but less than 16384 limit, including MaxExtraSize
-  static const int  MaxExtraSize = 50;    // Also arbitrary, current header is 5 bytes, trailer 36
+  static const int  MaxExtraSize = 1024;  // Also arbitrary, current header is 5 bytes, trailer 36, but 21 and 64 has been seen too.
 
   // Private data for SSL/TLS connections
   CredentialHandle  m_clientCredentials;

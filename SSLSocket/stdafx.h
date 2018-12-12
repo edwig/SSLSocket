@@ -14,5 +14,3 @@
 #include <iostream>
 #include <comdef.h>
 #include <memory>
-
-using namespace ATL;
